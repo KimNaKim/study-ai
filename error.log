@@ -1,0 +1,19 @@
+Starting a Gradle Daemon, 2 incompatible and 1 stopped Daemons could not be reused, use --status for details
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file 'C:\Workspace\spring_lab\demo\build.gradle' line: 3
+
+* What went wrong:
+An exception occurred applying plugin request [id: 'org.springframework.boot', version: '4.0.3']
+> Failed to apply plugin 'org.springframework.boot'.
+   > Spring Boot plugin requires Gradle 8.x (8.14 or later) or 9.x. The current version is Gradle 8.7
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 3s
