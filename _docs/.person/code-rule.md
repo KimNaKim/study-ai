@@ -1,65 +1,68 @@
-# 프로젝트 코드 컨벤션 (Project Code Convention)
+# 코드 컨벤션 요약
 
-본 문서는 `src/main/java` 하위의 `board`, `user` 등 도메인별 패키지 구조를 따르는 프로젝트의 개발 표준을 정의합니다.
+## 패키지 구조
 
-## 1. 패키지 구조 (Package Structure)
+도메인 기준 플랫 구조: `_core/`, `board/`, `user/` ...
 
-기능(Domain) 기반의 패키지 구조를 사용합니다. 관련된 클래스들은 응집도를 높이기 위해 같은 패키지에 위치시킵니다.
+각 도메인 폴더에 Entity, Controller, ApiController, Service, Repository, Request, Response 포함
 
-```text
-src/main/java/com/example/demo
-├── board               # 게시판 도메인
-│   ├── controller      # 웹 계층 (Controller)
-│   ├── service         # 비즈니스 로직 (Service)
-│   ├── repository      # 데이터 접근 (Repository)
-│   ├── entity          # DB 엔티티 (Entity)
-│   └── dto             # 데이터 전송 객체 (DTO)
-├── user                # 사용자 도메인
-│   ├── ... (board와 동일한 하위 구조)
-└── global              # 전역 공통 설정 (Config, Exception, Utils)
-```
+## 어노테이션 순서
 
-## 2. 네이밍 규칙 (Naming Conventions)
+| 레이어         | 순서                                                                        |
+| -------------- | --------------------------------------------------------------------------- |
+| Entity         | `@NoArgsConstructor` → `@Data` → `@Entity` → `@Table(name = "{도메인}_tb")` |
+| Service        | `@Transactional(readOnly = true)` → `@RequiredArgsConstructor` → `@Service` |
+| Controller     | `@RequiredArgsConstructor` → `@Controller`                                  |
+| RestController | `@RequiredArgsConstructor` → `@RestController` (별도 파일, `/api` 접두사)   |
 
-| 구분 | 규칙 | 예시 |
-| --- | --- | --- |
-| **Class / Interface** | PascalCase | `BoardService`, `UserEntity` |
-| **Method / Variable** | camelCase | `getBoardList()`, `userName` |
-| **Constant** | UPPER_SNAKE_CASE | `MAX_LOGIN_RETRY`, `DEFAULT_PAGE_SIZE` |
-| **DB Table** | snake_case | `board_comment`, `users` |
+## Entity 규칙
 
-## 3. 계층별 역할 및 규칙 (Layer Rules)
+- PK 타입: `Integer`, 전략: `GenerationType.IDENTITY`
+- `@Builder`는 생성자에 선언 (클래스 레벨 금지), 컬렉션 필드 제외
+- 모든 연관관계: `FetchType.LAZY`
+- 생성일: `@CreationTimestamp` + `LocalDateTime createdAt`
 
-### 3.1 Controller (`*Controller`)
-- 클라이언트의 요청을 받고 응답을 반환하는 역할만 수행합니다.
-- 비즈니스 로직을 포함하지 않으며, Service 계층을 호출합니다.
-- DTO를 통해 데이터를 주고받습니다 (Entity 직접 반환 금지).
+## Service 규칙
 
-### 3.2 Service (`*Service`)
-- 핵심 비즈니스 로직을 구현합니다.
-- 트랜잭션 관리(`@Transactional`)를 담당합니다.
-- Entity를 DTO로 변환하는 로직을 포함할 수 있습니다.
+- 클래스 레벨 `@Transactional(readOnly = true)`, 쓰기 메서드만 `@Transactional`
+- DTO는 Service에서 생성 → Controller로 Entity 직접 전달 금지
 
-### 3.3 Repository (`*Repository`)
-- DB 접근을 담당하며, JpaRepository를 상속받아 사용합니다.
-- 복잡한 쿼리는 QueryDSL 등을 사용하여 별도 구현체로 분리하는 것을 권장합니다.
+## Controller 규칙
 
-### 3.4 Entity (`*Entity` or Domain Name)
-- 데이터베이스 테이블과 매핑되는 객체입니다.
-- Setter 사용을 지양하고, 명확한 의도를 가진 메서드(예: `updateTitle()`)를 사용합니다.
-- 기본 생성자는 `protected`로 설정하여 무분별한 생성을 방지합니다 (`@NoArgsConstructor(access = AccessLevel.PROTECTED)`).
+- SSR: `{Domain}Controller` → Mustache 템플릿 경로 반환
+- REST: `{Domain}ApiController` → `Resp.ok(body)` / `Resp.fail(status, msg)` 반환
+- SSR과 REST는 반드시 별도 파일로 분리
 
-### 3.5 DTO (`*Dto`, `*Request`, `*Response`)
-- 계층 간 데이터 교환을 위한 객체입니다.
-- Java `record` 사용을 권장하거나, Lombok의 `@Data` 혹은 `@Getter`를 사용합니다.
+## DTO 규칙
 
-## 4. 코드 스타일 및 기타 (Code Style)
+- `{Domain}Request.java` — 내부 static class를 기능명으로 (`Save`, `Update`)
+- `{Domain}Response.java` — 내부 static class를 용도명으로 (`Detail`, `Items`)
+- 외부 클래스: 어노테이션 없음 / 내부 클래스: `@Data`
+- Entity → DTO 변환: 생성자 또는 정적 팩토리 메서드
 
-- **Lombok 사용**: 생성자 주입 시 `@RequiredArgsConstructor`를 적극 활용합니다.
-- **들여쓰기**: Space 4칸을 원칙으로 합니다.
-- **주석**: 클래스와 복잡한 로직의 메서드에는 Javadoc 스타일의 주석을 작성합니다.
-- **API 명세**: Controller 메서드에는 Swagger/OpenAPI 어노테이션을 사용하여 문서를 자동화합니다.
+## 공통 응답
 
----
-*작성일: 2024-05-21*
-*작성자: AI Architect*
+`_core/utils/Resp.java` — REST API는 반드시 `Resp<T>` 래퍼 사용
+
+## 프론트 (JS) 규칙
+
+- Ajax(fetch)는 `async` / `await` 사용
+- DOM 접근: `document.querySelector` 사용
+- POST 요청 기본: `<form>` 태그 + `name` 속성으로 제출 (페이지 이동 방식)
+- Ajax가 필요한 경우만 fetch 사용 (중복체크, 부분 갱신 등)
+
+## 네이밍
+
+| 대상        | 규칙               | 예시             |
+| ----------- | ------------------ | ---------------- |
+| 클래스/파일 | PascalCase         | `BoardService`   |
+| 메서드/변수 | camelCase          | `findAll`        |
+| 테이블      | snake_case + `_tb` | `board_tb`       |
+| 패키지      | lowercase          | `board`, `_core` |
+
+## 설정
+
+- OSIV: `false`
+- Fetch: 전부 `LAZY`
+- Batch: `default_batch_fetch_size=10`
+- 인증: `HttpSession`
