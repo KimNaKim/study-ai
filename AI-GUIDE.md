@@ -9,11 +9,9 @@ AI는 아래 지침에 따라 프로젝트의 규칙과 컨텍스트를 학습(M
 
 프로젝트의 일관성을 유지하기 위해 다음 규칙 파일을 반드시 먼저 읽고 숙지하십시오.
 
-- **파일 경로**: `_docs/.ai/rule/common-rule.md`, `_docs/.ai/rule/project-context.md`
-- **주요 내용**:
-  - **패키지 구조**: 도메인 기반 플랫 구조
-  - **코드 컨벤션**: Entity, DTO, Service, Controller 작성 규칙
-  - **응답 포맷**: `Resp` 래퍼 사용 및 공통 응답 처리
+- `_docs/.ai/rule/common-rule.md` : 코드 컨벤션 규칙
+- `_docs/.ai/rule/project-context.md` : 프로젝트 요약본
+- `_docs/.ai/skill/{스킬명}-skill/skill.md` : 스킬 파일들(제목, 트리거만)
 
 ## 2. 🚀 작업 수행 원칙
 

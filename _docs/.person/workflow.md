@@ -41,6 +41,77 @@
 
 ### 4. 프론트 (Mustache + JS)
 
-- 회원가입 페이지에서 username 입력란 옆 "중복확인" 버튼
-- fetch로 `/api/users/username-check?username=xxx` 호출
-- 응답에 따라 "사용 가능" / "이미 사용중" 메시지 표시
+#### 4-1. 회원가입 페이지 생성
+
+- 파일: `templates/user/join.mustache`
+
+```html
+<form>
+  <div>
+    <input type="text" id="username" placeholder="아이디" />
+    <button type="button" onclick="usernameCheck()">중복확인</button>
+    <span id="username-msg"></span>
+  </div>
+  <input type="password" id="password" placeholder="비밀번호" />
+  <input type="text" id="email" placeholder="이메일" />
+  <button type="submit">회원가입</button>
+</form>
+```
+
+#### 4-2. JS 함수
+
+```javascript
+async function usernameCheck() {
+  let username = document.querySelector("#username").value;
+  let msgEl = document.querySelector("#username-msg");
+
+  // 빈값 체크
+  if (username.trim() === "") {
+    msgEl.innerText = "아이디를 입력해주세요.";
+    msgEl.style.color = "red";
+    return;
+  }
+
+  // API 호출
+  try {
+    let response = await fetch(
+      `/api/users/username-check?username=${username}`,
+    );
+    let result = await response.json();
+
+    // result 구조: { status: 200, msg: "성공", body: true/false }
+    if (result.body) {
+      // true = 이미 존재
+      msgEl.innerText = "이미 사용중인 아이디입니다.";
+      msgEl.style.color = "red";
+    } else {
+      // false = 사용 가능
+      msgEl.innerText = "사용 가능한 아이디입니다.";
+      msgEl.style.color = "green";
+    }
+  } catch (error) {
+    alert("통신 오류가 발생했습니다.");
+  }
+}
+```
+
+#### 4-3. 응답 예시
+
+```json
+// username이 이미 존재할 때
+{ "status": 200, "msg": "성공", "body": true }
+
+// username이 없을 때 (사용 가능)
+{ "status": 200, "msg": "성공", "body": false }
+```
+
+#### 4-4. SSR 라우트 추가
+
+- `UserController`에 회원가입 페이지 이동 메서드 추가
+
+```java
+@GetMapping("/users/join")
+public String joinForm() {
+    return "user/join";
+}
+```
